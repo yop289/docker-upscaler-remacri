@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.log
+*.pth
+*.zip
+*.tar
+*.ckpt
+*.safetensors
+.DS_Store
+.env

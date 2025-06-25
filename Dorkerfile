@@ -1,0 +1,26 @@
+FROM nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu20.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y \
+    python3.10 python3-pip git wget curl nano fuse \
+    && apt-get clean
+
+# Instalar rclone
+RUN curl https://rclone.org/install.sh | bash
+
+# Crear carpetas de trabajo
+RUN mkdir -p /app /gdrive /workspace
+
+WORKDIR /app
+
+COPY requirements.txt .
+COPY upscale_pipeline.py .
+COPY run.sh .
+COPY rclone_config.sh .
+
+RUN pip3 install --upgrade pip && pip3 install -r requirements.txt
+
+RUN chmod +x run.sh rclone_config.sh
+
+ENTRYPOINT ["./run.sh"]
