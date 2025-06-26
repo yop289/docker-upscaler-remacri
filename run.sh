@@ -1,11 +1,18 @@
+# [2] run.sh (monta rclone y lanza watchdog)
 #!/bin/bash
 
-echo "Montando Google Drive..."
-mkdir -p /gdrive
-rclone mount gdrive: /gdrive --vfs-cache-mode writes &
+# Nombre del remote (puede ajustarse con una variable de entorno)
+REMOTE_NAME=${REMOTE_NAME:-gdrive}
 
-echo "Esperando 10 segundos para el montaje..."
+# Montar Google Drive
+mkdir -p /gdrive
+rclone mount "$REMOTE_NAME": /gdrive --vfs-cache-mode writes &
+
+echo "[INFO] Esperando 10s para montar Google Drive..."
 sleep 10
 
-echo "Iniciando procesamiento automático..."
-python3 upscale_pipeline.py
+# Lanzar watchdog (procesamiento automático)
+echo "[INFO] Iniciando proceso automático con ComfyUI + Remacri"
+cd /workspace/ComfyUI
+source venv/bin/activate
+python /workspace/watchdog.py

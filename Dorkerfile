@@ -1,26 +1,59 @@
-FROM nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu20.04
+# comfy-upscaler-automator
+# Repositorio automatizado para RunPod + ComfyUI + Google Drive + SDXL + Remacri
 
+# Estructura:
+# - Ejecuta en RunPod usando GPU A100
+# - Monta Google Drive
+# - Observa /gdrive/input
+# - Aplica ComfyUI (SDXL tile 4x + Remacri)
+# - Guarda en /gdrive/output
+# - Script local incluido para subir/bajar imágenes
+
+# [1] Dockerfile (basado en ComfyUI oficial con extras)
+FROM --platform=linux/amd64 nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu20.04
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Dependencias del sistema
 RUN apt-get update && apt-get install -y \
-    python3.10 python3-pip git wget curl nano fuse \
+    git wget curl nano python3.10 python3.10-venv python3-pip fuse \
+    libgl1 libglib2.0-0 \
     && apt-get clean
 
 # Instalar rclone
 RUN curl https://rclone.org/install.sh | bash
 
-# Crear carpetas de trabajo
-RUN mkdir -p /app /gdrive /workspace
+# Clonar ComfyUI
+WORKDIR /workspace
+RUN git clone https://github.com/comfyanonymous/ComfyUI.git
+WORKDIR /workspace/ComfyUI
 
-WORKDIR /app
+# Crear entorno virtual y activar
+RUN python3.10 -m venv venv && \
+    . venv/bin/activate && \
+    pip install --upgrade pip && \
+    pip install -r requirements.txt
 
-COPY requirements.txt .
-COPY upscale_pipeline.py .
-COPY run.sh .
-COPY rclone_config.sh .
+# Descargar modelos SDXL y Remacri manualmente o por script externo
+# Aquí se asume que estarán disponibles en /workspace/models
 
-RUN pip3 install --upgrade pip && pip3 install -r requirements.txt
+# Copiar modelos locales al contenedor
+COPY models/sdxl_base_1.0.safetensors /workspace/ComfyUI/models/checkpoints/sdxl_base_1.0.safetensors
+COPY models/4x_foolhardy_Remacri.pth /workspace/ComfyUI/models/upscale/4x_foolhardy_Remacri.pth
 
-RUN chmod +x run.sh rclone_config.sh
+# Crear carpeta para montaje de Drive
+RUN mkdir -p /gdrive
 
-ENTRYPOINT ["./run.sh"]
+# Copiar scripts
+COPY run.sh /workspace/run.sh
+COPY watchdog.py /workspace/watchdog.py
+COPY workflows/ /workspace/workflows/
+
+RUN chmod +x /workspace/run.sh
+
+# Entrypoint
+ENTRYPOINT ["/workspace/run.sh"]
+
+# [2] run.sh (monta rclone y lanza watchdog)
+# [3] watchdog.py (observa Drive y lanza workflows)
+# [4] workflows/generative_upscale.json (ComfyUI pipeline)
+# [5] local/local_sync.py (para subir y recuperar imágenes desde tu PC)

@@ -1,0 +1,33 @@
+[4] workflows/generative_upscale.json (ComfyUI pipeline)
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "<INPUT>"
+    }
+  },
+  "2": {
+    "class_type": "UpscaleImageSDXLTile",
+    "inputs": {
+      "image": ["1", 0],
+      "tile_size": 512,
+      "overlap": 64,
+      "model": "SDXL",
+      "prompt": "",
+      "scale": 4
+    }
+  },
+  "3": {
+    "class_type": "RealESRGAN",
+    "inputs": {
+      "image": ["2", 0],
+      "model": "Remacri"
+    }
+  },
+  "4": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "image": ["3", 0]
+    }
+  }
+}

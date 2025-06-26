@@ -4,20 +4,13 @@ import time
 import cv2
 from realesrgan import RealESRGANer
 
-# Rutas en Drive
 INPUT_DIR = Path('/gdrive/colab4x/input')
 OUTPUT_DIR = Path('/gdrive/colab4x/output')
-MODEL_DIR = Path('/gdrive/colab4x/models')
-MODEL_PATH = MODEL_DIR / 'RealESRGAN_x4plus.pth'
+MODEL_PATH = Path('/app/models/4x_foolhardy_Remacri.pth')
 
-# Crear directorios
-for d in [INPUT_DIR, OUTPUT_DIR, MODEL_DIR]:
+# Crear carpetas por si no existen
+for d in [INPUT_DIR, OUTPUT_DIR]:
     d.mkdir(parents=True, exist_ok=True)
-
-# Descargar modelo si no existe
-if not MODEL_PATH.exists():
-    print("Descargando modelo Remacri...")
-    os.system(f"wget https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5/RealESRGAN_x4plus.pth -O {MODEL_PATH}")
 
 def upscale_image(input_path, output_path):
     img = cv2.imread(str(input_path), cv2.IMREAD_COLOR)
